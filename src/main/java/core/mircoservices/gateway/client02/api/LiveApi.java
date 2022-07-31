@@ -26,7 +26,8 @@ public class LiveApi {
 	private ProjectConfig projectConfig;
 	
 	@GetMapping("/live-check")
-	public String liveCheck(@RequestHeader(required = false, name="my-app-correlation-id") String correlationId)  {
+	public String liveCheck(
+			@RequestHeader(required = false, name="my-app-correlation-id") String correlationId)  {
 		log.info("liveCheck:: correlationId:: " + correlationId);
 		Integer port = Integer.parseInt(environment.getProperty("server.port"));
 		return String.format("Api Gateway Client 02 Server:: %s", port);
@@ -43,6 +44,9 @@ public class LiveApi {
 	
 	@GetMapping("/configuration")
 	public ProjectConfigDto configuration() throws Exception {
-		return new ProjectConfigDto(projectConfig);
+		Integer port = Integer.parseInt(environment.getProperty("server.port"));
+		var config = new ProjectConfigDto(projectConfig);
+		config.setPort(port);
+		return config;
 	}
 }
