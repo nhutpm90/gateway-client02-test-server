@@ -1,7 +1,11 @@
 package core.mircoservices.gateway.client02.api;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,28 +29,25 @@ public class LiveApi {
 	@Autowired
 	private ProjectConfig projectConfig;
 	
-	@GetMapping("/live-check")
-	public String liveCheck(
-			@RequestHeader(required = false, name="my-app-correlation-id") String correlationId)  {
-		log.info("liveCheck:: correlationId:: " + correlationId);
-		Integer port = Integer.parseInt(environment.getProperty("server.port"));
-		return String.format("Api Gateway Client 02 Server:: %s", port);
+	@GetMapping(value = {"/", "/live-check"})
+	public Map<String, Object> liveCheck(@RequestParam(required = false) List<String> envs,
+			@RequestHeader(required = false, name="my-app-correlation-id") String correlationId) {
+		log.info("liveCheck:: envs:: " + envs + " - correlationId:: " + correlationId);
+		if (envs == null) {
+			envs = new ArrayList<>();
+		}
+		envs.addAll(Arrays.asList("spring.application.name", "server.port"));
+		Map<String, Object> ret = this.getEnvironmentConfig(new HashSet<>(envs));
+		ret.put("projectConfig", new ProjectConfigDto(projectConfig));
+
+		return ret;
 	}
 
-	@GetMapping("/env-check")
-	public Map<String, String> testParam(@RequestParam("envs") List<String> envs) {
-		Map<String, String> ret = envs.stream()
+	public Map<String, Object> getEnvironmentConfig(Set<String> envs) {
+		Map<String, Object> ret = envs.stream()
 				.collect(Collectors.toMap(
 						k -> k, 
 						v -> environment.getProperty(v)));
 		return ret;
-	}
-	
-	@GetMapping("/configuration")
-	public ProjectConfigDto configuration() throws Exception {
-		Integer port = Integer.parseInt(environment.getProperty("server.port"));
-		var config = new ProjectConfigDto(projectConfig);
-		config.setPort(port);
-		return config;
 	}
 }
